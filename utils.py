@@ -19,3 +19,15 @@ def preprocess_data(_X, _Y, _X_test, _Y_test, _seq_len):
     _X_test, _Y_test = drop(_X_test, _Y_test, _seq_len)
 
     return _X, _Y, _X_test, _Y_test
+
+
+
+def preprocess_data_1(_X, _Y, _seq_len):
+    # split into sequences
+    _X = torch.split(_X, _seq_len, dim=0)
+    _Y = torch.split(_Y, _seq_len, dim=0)
+
+
+    _X, _Y = drop(_X, _Y, _seq_len)
+
+    return _X, _Y

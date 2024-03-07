@@ -7,8 +7,11 @@ from torch.utils.data import Dataset
 
 def load_desc_file(_desc_file, __class_labels):
     _desc_dict = dict()
+   # print(_desc_file)
     for line in open(_desc_file):
+
         words = line.strip().split('\t')
+        #print(words)
         words = words[:len(words) - 2]  # Removing 'mixture a001 (audio file name)' after the class label
         name = words[0].split('/')[-1]
         if name not in _desc_dict:
@@ -54,11 +57,18 @@ class MelData(Dataset):
         meta = os.path.join(self.root + 'meta.txt')
         meta_dict = load_desc_file(meta, self.class_labels)
 
+        #print(meta_dict)
+        #input()
+
         for audio_file in os.listdir(os.path.join(root + 'audio/' + 'street')):
             audio_path = os.path.join(root + 'audio/' + 'street/' + audio_file)
             y, sr = torchaudio.load(audio_path)
+
             # make it mono
             y = torch.mean(y, dim=0)
+
+            #print(audio_path, y.shape[0]/sr)
+
             if sr != self.sample_rate:
                 y = torchaudio.functional.resample(y, orig_freq=sr, new_freq=self.sample_rate)
             mels = self.melspec(y)
@@ -70,6 +80,11 @@ class MelData(Dataset):
             frame_start = np.floor(tmp_data[:, 0] * self.sample_rate / self.hop_length).astype(int)
             frame_end = np.ceil(tmp_data[:, 1] * self.sample_rate / self.hop_length).astype(int)
             se_class = tmp_data[:, 2].astype(int)
+
+           # print(audio_file)
+           # print(tmp_data)
+
+            #input()
             for ind, val in enumerate(se_class):
                 label[frame_start[ind]:frame_end[ind], val] = 1
 
@@ -81,5 +96,7 @@ class MelData(Dataset):
 
             self.mel_list.append(mels)
             self.label_list.append(label)
+
+            #print(label)
 
         print("Total audio files =", len(self.mel_list))

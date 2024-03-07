@@ -64,7 +64,6 @@ class ConvBlock(nn.Module):
 
         return x
 
-
 class CRNN(nn.Module):
     def __init__(self, classes_num):
 
