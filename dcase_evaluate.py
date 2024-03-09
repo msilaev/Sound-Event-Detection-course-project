@@ -25,15 +25,13 @@ def find_contiguous_regions(activity_array):
     # Reshape the result into two columns
     return change_indices.reshape((-1, 2))
 
-
 def process_event_my(class_labels, frame_probabilities, threshold, hop_length_seconds, file_name):
     results = []
     events_dic = {}
     for event_id, event_label in enumerate(class_labels):
         # Binarization
 
-        #print(frame_probabilities.shape)
-        #input()
+
 
         event_activity = frame_probabilities[event_id, :] > threshold
 
@@ -67,7 +65,7 @@ def process_event_my(class_labels, frame_probabilities, threshold, hop_length_se
             if (x[1]-x[0] > minimum_event_length ):
                 processed_sorted_events_dic_keys.append(x)
                 processed_sorted_events_dic_values.append(sorted_events_dic_values[ind])
-                print(x, sorted_events_dic_values[ind])
+               # print(x, sorted_events_dic_values[ind])
                 file.write(f"{x[0]},{x[1]},{sorted_events_dic_values[ind]}\n")
 
 def process_event(class_labels, frame_probabilities, threshold, hop_length_seconds):
@@ -76,9 +74,6 @@ def process_event(class_labels, frame_probabilities, threshold, hop_length_secon
 
     for event_id, event_label in enumerate(class_labels):
         # Binarization
-
-        #print(frame_probabilities.shape)
-        #input()
 
         event_activity = frame_probabilities[event_id, :] > threshold
 
@@ -96,8 +91,6 @@ def process_event(class_labels, frame_probabilities, threshold, hop_length_secon
                     }
                 )
             )
-
-
 
     results = metadata.MetaDataContainer(results)
 

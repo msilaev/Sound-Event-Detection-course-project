@@ -9,9 +9,9 @@ import numpy as np
 import datasetfactory as dfs
 import config
 import sed_eval
-from dcase_evaluate import get_SED_results
+from dcase_evaluate import get_SED_results, process_event, process_event_my
 import model
-from utils import preprocess_data
+from utils import preprocess_data, preprocess_data_1, plot_sound_events
 from dataset_batch import BatchData
 
 
@@ -43,9 +43,16 @@ __class_labels_dict = {
 }
 
 # Development and evaluation sets paths
-development_folder = 'dataset/SED_2017_street/TUT-sound-events-2017-development/'
-evaluation_folder = 'dataset/SED_2017_street/TUT-sound-events-2017-evaluation/'
+development_folder = '../dataset/SED_2017_street/TUT-sound-events-2017-development/'
+evaluation_folder = '../dataset/SED_2017_street/TUT-sound-events-2017-evaluation/'
+#evaluation_folder = '../dataset/MyEvaluationSet/'
 
+check_time_stamp_folder = "../dataset/CheckTimeStamps/"
+
+#usage_folder = 'dataset/MyEvaluationSet/'
+
+time_stamp_predict_file = "time_stamp_predict.txt"
+time_stamp_label_file = "time_stamp_label.txt"
 
 def train(model, train_loader, epoch, check_point):
     step = 0
@@ -61,8 +68,6 @@ def train(model, train_loader, epoch, check_point):
             optimizer.zero_grad()
             mel, target = mel.to(device), target.to(device).float()
             logits = model(mel)
-
-            #print(logits.shape)
             loss = criteria(logits, target)
             sum_loss += loss.item()
             loss.backward()
@@ -76,6 +81,40 @@ def train(model, train_loader, epoch, check_point):
         scheduler.step()
 
 
+def predict_time_stamps(model, usage_loader, check_time_stamp_folder):
+    model.to(device)
+    model.eval()
+
+    preds_list = []
+    target_list = []
+
+    for batch_idx, (mel, target) in enumerate(usage_loader):
+        mel, target = mel.to(device), target.to(device).float()
+        preds = torch.sigmoid(model(mel))
+
+        preds_list.extend(preds.view(-1, preds.size(2)).cpu().detach().numpy())
+        target_list.extend(target.view(-1, preds.size(2)).cpu().detach().numpy())
+
+
+
+    hop_length_seconds = config.hop_len/config.sr
+    threshold = 0.5
+
+    # this is needed to generate  time stamps of predicted events
+    process_event_my(list(__class_labels_dict.keys()),
+                  np.array(preds_list).T,
+                  threshold, hop_length_seconds, time_stamp_predict_file)
+
+
+    process_event_my(list(__class_labels_dict.keys()),
+                     np.array(target_list).T,
+                     threshold, hop_length_seconds, time_stamp_label_file)
+
+
+#    predicted = process_event( list(__class_labels_dict.keys()),
+#                              np.array(preds_list).T,
+#                              threshold, hop_length_seconds )
+
 def evaluate(model, test_loader):
     model.to(device)
     model.eval()
@@ -85,15 +124,11 @@ def evaluate(model, test_loader):
 
     for batch_idx, (mel, target) in enumerate(test_loader):
 
-
         mel, target = mel.to(device), target.to(device).float()
         preds = torch.sigmoid(model(mel))
 
         preds_list.extend(preds.view(-1, preds.size(2)).cpu().detach().numpy())
         target_list.extend(target.view(-1, target.size(2)).cpu().detach().numpy())
-
-        #print(target_list[-1])
-        #input()
 
     segment_based_metrics = sed_eval.sound_event.SegmentBasedMetrics(
         event_label_list=list(__class_labels_dict.keys()),
@@ -105,7 +140,6 @@ def evaluate(model, test_loader):
                         list(__class_labels_dict.keys()), segment_based_metrics,
                         threshold=0.5,
                         hop_size=config.hop_len, sample_rate=config.sr))
-
 
     #nonzeroInd = np.where (np.any(np.array(target_list) != 0, axis =1 ))[0]
 #    for i in nonzeroInd :
@@ -126,14 +160,24 @@ if __name__ == '__main__':
     development_data = dfs.MelData(development_folder, __class_labels_dict, sample_rate=config.sr,
                                    n_mels=config.nb_mel_bands,
                                    n_fft=config.nfft, hop_length=config.hop_len)
+
     evaluation_data = dfs.MelData(evaluation_folder, __class_labels_dict, sample_rate=config.sr,
                                   n_mels=config.nb_mel_bands,
                                   n_fft=config.nfft, hop_length=config.hop_len)
 
+    usage_data = dfs.MelData(check_time_stamp_folder, __class_labels_dict, sample_rate=config.sr,
+                                  n_mels=config.nb_mel_bands,
+                                  n_fft=config.nfft, hop_length=config.hop_len)
+
     X_dev, Y_dev = development_data.mel_tensor, development_data.label_tensor
+
     X_eval, Y_eval = evaluation_data.mel_tensor, evaluation_data.label_tensor
 
+    X_usage, Y_usage = usage_data.mel_tensor, usage_data.label_tensor
+
     X_dev, Y_dev, X_eval, Y_eval = preprocess_data(X_dev, Y_dev, X_eval, Y_eval, config.seq_length)
+
+    X_usage, Y_usage = preprocess_data_1(X_usage, Y_usage, config.seq_length)
     # X_dev, X_eval = torch.from_numpy(X_dev).float(), torch.from_numpy(X_eval).float()
 
     Answer = input("Train model ? : (Y/N)").lower()
@@ -158,4 +202,11 @@ if __name__ == '__main__':
     test_loader = torch.utils.data.DataLoader(BatchData(X_eval, Y_eval), batch_size=args.batch_size, shuffle=False,
                                               num_workers=args.num_workers)
 
+    usage_loader = torch.utils.data.DataLoader(BatchData(X_usage, Y_usage), batch_size=args.batch_size, shuffle=False,
+                                              num_workers=args.num_workers)
+
+    predict_time_stamps(model, usage_loader, check_time_stamp_folder)
     evaluate(model, test_loader)
+
+    plot_sound_events()
+
