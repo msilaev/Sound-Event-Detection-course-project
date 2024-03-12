@@ -65,7 +65,7 @@ def process_event_my(class_labels, frame_probabilities, threshold, hop_length_se
             if (x[1]-x[0] > minimum_event_length ):
                 processed_sorted_events_dic_keys.append(x)
                 processed_sorted_events_dic_values.append(sorted_events_dic_values[ind])
-               # print(x, sorted_events_dic_values[ind])
+                print(x, sorted_events_dic_values[ind])
                 file.write(f"{x[0]},{x[1]},{sorted_events_dic_values[ind]}\n")
 
 def process_event(class_labels, frame_probabilities, threshold, hop_length_seconds):

@@ -45,7 +45,7 @@ __class_labels_dict = {
 # Development and evaluation sets paths
 development_folder = '../dataset/SED_2017_street/TUT-sound-events-2017-development/'
 evaluation_folder = '../dataset/SED_2017_street/TUT-sound-events-2017-evaluation/'
-#evaluation_folder = '../dataset/MyEvaluationSet/'
+evaluation_folder = '../dataset/MyEvaluationSet/'
 
 check_time_stamp_folder = "../dataset/CheckTimeStamps/"
 

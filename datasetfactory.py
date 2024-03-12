@@ -67,7 +67,6 @@ class MelData(Dataset):
             # make it mono
             y = torch.mean(y, dim=0)
 
-            #print(audio_path, y.shape[0]/sr)
 
             if sr != self.sample_rate:
                 y = torchaudio.functional.resample(y, orig_freq=sr, new_freq=self.sample_rate)
@@ -81,10 +80,7 @@ class MelData(Dataset):
             frame_end = np.ceil(tmp_data[:, 1] * self.sample_rate / self.hop_length).astype(int)
             se_class = tmp_data[:, 2].astype(int)
 
-           # print(audio_file)
-           # print(tmp_data)
 
-            #input()
             for ind, val in enumerate(se_class):
                 label[frame_start[ind]:frame_end[ind], val] = 1
 

@@ -63,7 +63,7 @@ def plot_sound_events():
     data_annotation = pd.read_csv(time_stamp_label_file, header=None, names=column_names)
 
     settings = {'annotated': {'y_value': 1, 'linestyle': '-', 'label': 'Annotated'},
-                'model_output': {'y_value': 0.995, 'linestyle': '--', 'label': 'Model Output'}}
+                'model_output': {'y_value': 0.995, 'linestyle': '-', 'label': 'Model Output'}}
     # Closer y_value and different linestyle
 
     # Plot each class activity
@@ -83,7 +83,10 @@ def plot_sound_events():
         audio_class = row['class']
         color = class_colors_dict[audio_class]
 
-        ax.plot([start_time, end_time], [settings['model_output']['y_value'], settings['model_output']['y_value']],
+        print(start_time,end_time)
+
+        ax.plot([start_time, end_time], [settings['model_output']['y_value'],
+                                         settings['model_output']['y_value']],
                 color=color,
                 linewidth=10, linestyle=settings['model_output']['linestyle'])
 
